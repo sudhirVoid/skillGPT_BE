@@ -1,15 +1,14 @@
 import express, { Request, Response, NextFunction } from 'express';
-
-
+import contentGeneratorRouter  from './routes/generate';
+import { PORT } from './constants/constants';
 const app = express();
-const port = process.env.PORT || 3000;
+const port = PORT || 3000;
 
 app.use(express.json());
 
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello, TypeScript Express!');
-});
+// for all generating content from GPT we use this path requests.
+app.use('/generate', contentGeneratorRouter);
 
 // Add this error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -17,6 +16,8 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(500).send('Something went wrong');
 });
 
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
+export default app;
