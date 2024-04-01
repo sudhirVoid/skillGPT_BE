@@ -45,6 +45,13 @@ async function chapterGenerator(chapterConfig: ChapterConfig){
     
 }
 
+async function chapterConversationHandler(conversationObject: any){
+    let conversationPrompt = `
+    
+    `
+    return await gptCall(conversationObject)
+
+}
 
 
 

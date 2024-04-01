@@ -1,0 +1,19 @@
+CREATE TABLE Books (
+    book_id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL
+    
+);
+
+CREATE TABLE Chapters (
+    chapter_id SERIAL PRIMARY KEY,
+    book_id INT REFERENCES Books(book_id),
+    chapter_title VARCHAR(255) NOT NULL
+    
+);
+
+CREATE TABLE Content (
+    content_id SERIAL PRIMARY KEY,
+    chapter_id INT REFERENCES Chapters(chapter_id),
+    content_text JSONB
+    
+);
