@@ -5,52 +5,67 @@ import {
   ChapterConfig,
   chapterGenerator,
 } from "../controllers/gptController";
-import { getPgVersion  } from "../controllers/db";
+import { bookInsertion, getPgVersion,chapterInsertion,ChapterConversation, chapterContentInsertion  } from "../controllers/db";
 
 const router: Router = Router();
 
 router.post("/syllabus", async (req: Request, res: Response) => {
-//   let syllabus: SyllabusConfig = req.body;
-//   let syllabusTopics = await syllabusGenerator(syllabus);
+  let syllabus: SyllabusConfig = req.body;
+  let chapters = await syllabusGenerator(syllabus);
 //   res.json({ chapters: syllabusTopics, topic: syllabus.bookTopic });
-    let bookTopic = "Space";
-    let chapters = [
-      "Exploración espacial",
-      "Los planetas del sistema solar",
-      "Agujeros negros y agujeros de gusano",
-      "Historia de la astronomía",
-      "Vida en el espacio",
-      "Tecnología espacial",
-      "El origen del universo",
-      "Viajes interestelares",
-      "Misterios del cosmos.",
-    ];
+let bookTopic = syllabus.bookTopic;
+let bookLanguage = syllabus.language
+// let chapters = [
+//   "Introduction to Medical Science",
+//   "Anatomy and Physiology",
+//   "Disease Pathology",
+//   "Pharmacology and Therapeutics",
+//   "Medical Imaging Techniques",
+//   "Surgical Procedures",
+//   "Epidemiology and Public Health",
+//   "Genetics and Molecular Medicine",
+//   "Emerging Technologies in Healthcare"
+// ];
+
+
     //insert bookTopic
-    await getPgVersion();
-    //insert chapters
-    // await chapterInsertion(1, chapters);
+    /*
+    return object like:
+    { book_id: 1, title: 'Physics' }
+
+    */
+    let bookResult = await bookInsertion(bookTopic, bookLanguage);
+    console.log(bookResult)
+    let bookId = bookResult?.book_id;
+    //insert chapters and returns chapter with their id at insertion time.
+    /*
+    [
+    { chapterid: 10, chaptertitle: 'Exploración espacial' },
+    { chapterid: 11, chaptertitle: 'Los planetas del sistema solar' },]
+
+    */
+    let chapterResult = await chapterInsertion(bookId, chapters);
+    
   res.json({
-    chapters: [
-      "Exploración espacial",
-      "Los planetas del sistema solar",
-      "Agujeros negros y agujeros de gusano",
-      "Historia de la astronomía",
-      "Vida en el espacio",
-      "Tecnología espacial",
-      "El origen del universo",
-      "Viajes interestelares",
-      "Misterios del cosmos.",
-    ],
-    topic: "Space",
+    chaptersData: chapterResult,
+    topicData: bookResult,
   });
 });
 
 router.post("/chapter", async (req: Request, res: Response) => {
   let chapter: ChapterConfig = req.body;
+  //here chapterContent is pure html.
   let chapterContent = await chapterGenerator(chapter);
-  res.setHeader("Content-Type", "text/html");
-  // res.json({msg: chapterContent})
-  res.send(chapterContent);
+  let chapterConversation: ChapterConversation = {
+    chapterId: chapter.chapterId,
+    content: [{
+      gpt: chapterContent
+    }]
+  }
+  let chapterContentResult = await chapterContentInsertion(chapterConversation)
+  // res.setHeader("Content-Type", "text/html");
+  res.json({msg: chapterContentResult});
+
 });
 
 export default router;

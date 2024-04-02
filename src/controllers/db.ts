@@ -7,34 +7,49 @@ const pool = new Pool(
     connectionString: DATABASEURL
   }
 )
-
+interface ChapterConversation{
+  chapterId: number,
+  content: {
+    gpt: string,
+    user?: string //user is optional
+  }[]
+}
 async function getPgVersion() {
   const result = await pool.query('SELECT * FROM BOOKS');
   console.log(result);
 }
-// const sql = neon(DATABASEURL!)
 
-// async function getPgVersion() {
-//   const result = await sql`SELECT version()`;
-//   console.log(result);
-// }
-// async function bookInsertion(bookTitle: string){
-//   // let query = `INSERT INTO BOOKS (title) VALUES ('${bookTitle}') RETURNING *;`;
-//   let query = `Select * from Books`;
-//   let [result] = await sql`${query}`;
-//   console.log(result)
-// }
+// insert book title in table name BOOKS
+async function bookInsertion(bookTitle: string, bookLanguage: string){
+  let query = `INSERT INTO BOOKS (title,booklanguage) VALUES ('${bookTitle}','${bookLanguage}') RETURNING book_id , title;`;
 
-// async function chapterInsertion(bookId: number, chapters: string[]) {
-//   let wholeQuery = ""
-//   for (let i = 0; i < chapters.length; i++) {
-//     let chapterTitle = chapters[i];
-//     wholeQuery += `INSERT INTO CHAPTERS (book_id, chapter_title) VALUES (${bookId}, '${chapterTitle}');`;
-//   }
+  let result = await pool.query(query);
+  // console.log(result)
+  return result.rows[0]
+}
 
-//   let result = await sql`${wholeQuery}`;
-//   console.log(result)
+async function chapterInsertion(bookId: number, chapters: string[]) {
+  let query = "INSERT INTO CHAPTERS (book_id, chapter_title) VALUES ";
+  for (let i = 0; i < chapters.length; i++) {
+    if(i===chapters.length-1){
+      query += `(${bookId}, '${chapters[i]}') RETURNING chapter_id as chapterId, chapter_title as chapterTitle;`;
+      continue
+    }
+    query += `(${bookId}, '${chapters[i]}'),`;
+  }
+
+  let result = await pool.query(query)
+  console.log(result)
+  return result.rows
   
-// }
+}
 
-export { getPgVersion };
+async function chapterContentInsertion(chapterDetails: ChapterConversation){
+  let query = `INSERT INTO CONTENT (chapter_id, content_text) VALUES (${chapterDetails.chapterId},'${JSON.stringify(chapterDetails.content)}') RETURNING content_id, content_text ;`
+
+  let result = await pool.query(query)
+  console.log(result)
+  return result.rows
+}
+
+export { getPgVersion, bookInsertion, chapterInsertion, ChapterConversation,chapterContentInsertion};
