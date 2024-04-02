@@ -8,14 +8,15 @@ const openai = new OpenAI(
 );
 
 interface SyllabusConfig {
-    bookTopic: String,
-    language: String
+    bookTopic: string,
+    language: string
 }
 
 interface ChapterConfig {
-    bookTopic: String,
-    bookChapter: String,
-    bookLanguage: String
+    bookTopic: string,
+    bookChapter: string,
+    bookLanguage: string,
+    chapterId:number
 }
 async function syllabusGenerator(syllabusConfig: SyllabusConfig) {
     let syllabusSystemPrompt = `
