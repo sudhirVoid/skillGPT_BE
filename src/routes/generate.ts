@@ -4,8 +4,10 @@ import {
   SyllabusConfig,
   ChapterConfig,
   chapterGenerator,
+  ChapterConversationConfig,
+  chapterConversationHandler
 } from "../controllers/gptController";
-import { bookInsertion, getPgVersion,chapterInsertion,ChapterConversation, chapterContentInsertion  } from "../controllers/db";
+import { bookInsertion,chapterInsertion,ChapterConversation, chapterContentInsertion, getAllBooksOfUser  } from "../controllers/db";
 
 const router: Router = Router();
 
@@ -13,19 +15,7 @@ router.post("/syllabus", async (req: Request, res: Response) => {
   let syllabus: SyllabusConfig = req.body;
   let chapters = await syllabusGenerator(syllabus);
 //   res.json({ chapters: syllabusTopics, topic: syllabus.bookTopic });
-let bookTopic = syllabus.bookTopic;
-let bookLanguage = syllabus.language
-// let chapters = [
-//   "Introduction to Medical Science",
-//   "Anatomy and Physiology",
-//   "Disease Pathology",
-//   "Pharmacology and Therapeutics",
-//   "Medical Imaging Techniques",
-//   "Surgical Procedures",
-//   "Epidemiology and Public Health",
-//   "Genetics and Molecular Medicine",
-//   "Emerging Technologies in Healthcare"
-// ];
+
 
 
     //insert bookTopic
@@ -34,22 +24,32 @@ let bookLanguage = syllabus.language
     { book_id: 1, title: 'Physics' }
 
     */
-    let bookResult = await bookInsertion(bookTopic, bookLanguage);
+    let bookResult = await bookInsertion(syllabus.bookTopic, syllabus.language, syllabus.userId);
     console.log(bookResult)
     let bookId = bookResult?.book_id;
     //insert chapters and returns chapter with their id at insertion time.
     /*
     [
     { chapterid: 10, chaptertitle: 'Exploración espacial' },
-    { chapterid: 11, chaptertitle: 'Los planetas del sistema solar' },]
+    { chapterid: 11, chaptertitle: 'Los planetas del sistema solar' }]
 
     */
     let chapterResult = await chapterInsertion(bookId, chapters);
-    
+    //TODO: 
   res.json({
     chaptersData: chapterResult,
     topicData: bookResult,
+    
   });
+
+  // res.json(
+  //   {
+  //     chapterData: [
+  //       { chapterid: 10, chaptertitle: 'Exploración espacial' },
+  //       { chapterid: 11, chaptertitle: 'Los planetas del sistema solar' }],
+  //       topicData: { book_id: 1, title: 'Physics' }
+  //   }
+  // )
 });
 
 router.post("/chapter", async (req: Request, res: Response) => {
@@ -67,5 +67,35 @@ router.post("/chapter", async (req: Request, res: Response) => {
   res.json({msg: chapterContentResult});
 
 });
+
+router.post("/chapterConversation", async (req: Request, res: Response) => {
+  /*
+  content: {
+        gpt: string,
+        user?: string
+    }[]
+    here we change [{role: 'agent', content: 'hello'}] we have system, agent, user.
+    gpt-agent
+    user-user 
+  */
+  let chapterConversation: ChapterConversationConfig = req.body;
+
+  // send this to chapterConversationHandler
+  let conversationResult = await chapterConversationHandler(chapterConversation)
+  /*
+    response structure is this:
+    {
+        gpt: gptResponse,
+        user: currentUser
+    }
+
+  */
+    chapterConversation.content.push(conversationResult as any)
+    console.log(chapterConversation.content)
+    //insert in database.
+    chapterContentInsertion(chapterConversation.content as any)
+  res.json({msg: conversationResult});
+});
+
 
 export default router;

@@ -20,8 +20,8 @@ async function getPgVersion() {
 }
 
 // insert book title in table name BOOKS
-async function bookInsertion(bookTitle: string, bookLanguage: string){
-  let query = `INSERT INTO BOOKS (title,booklanguage) VALUES ('${bookTitle}','${bookLanguage}') RETURNING book_id , title;`;
+async function bookInsertion(bookTitle: string, bookLanguage: string, userId: string){
+  let query = `INSERT INTO BOOKS (title,booklanguage, user_id) VALUES ('${bookTitle}','${bookLanguage}', '${userId}') RETURNING book_id , title, user_id;`;
 
   let result = await pool.query(query);
   // console.log(result)
@@ -52,4 +52,11 @@ async function chapterContentInsertion(chapterDetails: ChapterConversation){
   return result.rows
 }
 
-export { getPgVersion, bookInsertion, chapterInsertion, ChapterConversation,chapterContentInsertion};
+async function getAllBooksOfUser(userId: string){
+  let query = `SELECT * FROM BOOKS WHERE user_id = '${userId}';`
+  let result = await pool.query(query)
+  console.log(result)
+  return result.rows
+}
+
+export { getPgVersion, bookInsertion, chapterInsertion, ChapterConversation,chapterContentInsertion, getAllBooksOfUser};
