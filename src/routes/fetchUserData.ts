@@ -19,6 +19,10 @@ router.post("/getAllBooks", async(req: Request, res: Response) => {
             userData: allBooks
         }
     );
-  })
+  });
+
+  router.post("/getBookChapters", async(req: Request, res: Response) => {
+    let bookId = req.body.bookId;
+  });
 
 export default router;
