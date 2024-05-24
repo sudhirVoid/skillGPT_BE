@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import contentGeneratorRouter  from './routes/generate';
+import userDataRouter from './routes/fetchUserData'
 import cors from "cors";
 import { PORT } from './constants/constants';
 import { bookInsertion, getPgVersion } from './controllers/db';
@@ -12,7 +13,7 @@ app.use(cors())
 
 // for all generating content from GPT we use this path requests.
 app.use('/generate', contentGeneratorRouter);
-
+app.use('/userData', userDataRouter);
 // Add this error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);

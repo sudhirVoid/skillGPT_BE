@@ -16,15 +16,13 @@ interface ChapterConversation{
 }
 async function getPgVersion() {
   const result = await pool.query('SELECT * FROM BOOKS');
-  console.log(result);
 }
 
 // insert book title in table name BOOKS
-async function bookInsertion(bookTitle: string, bookLanguage: string){
-  let query = `INSERT INTO BOOKS (title,booklanguage) VALUES ('${bookTitle}','${bookLanguage}') RETURNING book_id , title;`;
+async function bookInsertion(bookTitle: string, bookLanguage: string, userId: string){
+  let query = `INSERT INTO BOOKS (title,booklanguage, user_id) VALUES ('${bookTitle}','${bookLanguage}', '${userId}') RETURNING book_id , title, user_id;`;
 
   let result = await pool.query(query);
-  // console.log(result)
   return result.rows[0]
 }
 
@@ -39,7 +37,6 @@ async function chapterInsertion(bookId: number, chapters: string[]) {
   }
 
   let result = await pool.query(query)
-  console.log(result)
   return result.rows
   
 }
@@ -48,8 +45,25 @@ async function chapterContentInsertion(chapterDetails: ChapterConversation){
   let query = `INSERT INTO CONTENT (chapter_id, content_text) VALUES (${chapterDetails.chapterId},'${JSON.stringify(chapterDetails.content)}') RETURNING content_id, content_text ;`
 
   let result = await pool.query(query)
-  console.log(result)
   return result.rows
 }
 
-export { getPgVersion, bookInsertion, chapterInsertion, ChapterConversation,chapterContentInsertion};
+async function getAllBooksOfUser(userId: string){
+  let query = `SELECT * FROM BOOKS WHERE user_id = '${userId}';`
+  let result = await pool.query(query)
+  return result.rows
+}
+
+async function getBookChaptersByBookId(bookId: string){
+  let query = `SELECT * FROM CHAPTERS WHERE book_id = ${bookId};`
+  let result = await pool.query(query)
+  return result.rows
+};
+
+async function getChapterDataByChapterId(chapterId: string){
+  let query = `SELECT * FROM CONTENT WHERE chapter_id = ${chapterId};`
+  let result = await pool.query(query)
+  return result.rows
+};
+
+export { getPgVersion, bookInsertion, chapterInsertion, ChapterConversation,chapterContentInsertion, getAllBooksOfUser,getBookChaptersByBookId, getChapterDataByChapterId};
