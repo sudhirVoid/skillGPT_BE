@@ -3,7 +3,7 @@ import contentGeneratorRouter  from './routes/generate';
 import userDataRouter from './routes/fetchUserData'
 import cors from "cors";
 import { PORT } from './constants/constants';
-import { bookInsertion, getPgVersion } from './controllers/db';
+import { bookInsertion} from './controllers/db';
 
 const app = express();
 const port = PORT || 3000;
