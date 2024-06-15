@@ -38,7 +38,16 @@ async function chapterContentInsertion(chapterDetails: ChapterConversation){
   let result = await executeQuery(query)
   return result
 }
+async function chapterContentUpdate(chapterDetails: ChapterConversation){
+  let query = `UPDATE CONTENT
+                SET content_text = '${JSON.stringify(chapterDetails.content)}'
+                WHERE chapter_id = ${chapterDetails.chapterId}
+                RETURNING content_id, content_text;
+              `
 
+  let result = await executeQuery(query)
+  return result
+}
 async function getAllBooksOfUser(userId: string){
   let query = `SELECT * FROM BOOKS WHERE user_id = '${userId}';`
   let result = await executeQuery(query)
@@ -62,4 +71,5 @@ async function getChapterConversationByChapterId(chapterId: number){
   return result;
 }
 
-export {getChapterConversationByChapterId, bookInsertion, chapterInsertion, ChapterConversation,chapterContentInsertion, getAllBooksOfUser,getBookChaptersByBookId, getChapterDataByChapterId};
+
+export {getChapterConversationByChapterId, bookInsertion, chapterInsertion, ChapterConversation,chapterContentInsertion, getAllBooksOfUser,getBookChaptersByBookId, getChapterDataByChapterId,chapterContentUpdate};

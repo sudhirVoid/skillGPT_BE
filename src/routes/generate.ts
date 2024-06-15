@@ -7,7 +7,7 @@ import {
   ChapterConversationConfig,
   chapterConversationHandler
 } from "../controllers/gptController";
-import { bookInsertion,chapterInsertion,ChapterConversation, chapterContentInsertion, getAllBooksOfUser  } from "../controllers/db";
+import { bookInsertion,chapterInsertion,ChapterConversation, chapterContentInsertion, chapterContentUpdate, getChapterConversationByChapterId  } from "../controllers/db";
 
 const router: Router = Router();
 
@@ -52,9 +52,16 @@ router.post("/syllabus", async (req: Request, res: Response) => {
   // )
 });
 
+//TODO: need to check in db if that chapter already exists or not . if doesnot exist then only generate with chatgpt.
 router.post("/chapter", async (req: Request, res: Response) => {
   let chapter: ChapterConfig = req.body;
   //here chapterContent is pure html.
+  // check if the chapterid already exists in the content table.
+  let chapterData = await getChapterConversationByChapterId(chapter.chapterId);
+  if(chapterData.length > 0){
+    res.json({msg: chapterData});
+  }
+  else{
   let chapterContent = await chapterGenerator(chapter);
   let chapterConversation: ChapterConversation = {
     chapterId: chapter.chapterId,
@@ -63,9 +70,9 @@ router.post("/chapter", async (req: Request, res: Response) => {
     }]
   }
   let chapterContentResult = await chapterContentInsertion(chapterConversation)
-  // res.setHeader("Content-Type", "text/html");
   res.json({msg: chapterContentResult});
-
+}
+  // res.setHeader("Content-Type", "text/html");
 });
 
 router.post("/chapterConversation", async (req: Request, res: Response) => {
@@ -93,7 +100,11 @@ router.post("/chapterConversation", async (req: Request, res: Response) => {
     chapterConversation.content.push(conversationResult as any)
     console.log(chapterConversation.content)
     //insert in database.
-    chapterContentInsertion(chapterConversation.content as any)
+    let updateConversationObject: ChapterConversation = {
+      chapterId: chapterConversation.chapterDetails.chapterId,
+      content: chapterConversation.content
+    }
+    await chapterContentUpdate(updateConversationObject)
   res.json({msg: conversationResult});
 });
 
