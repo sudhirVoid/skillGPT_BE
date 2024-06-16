@@ -12,6 +12,9 @@ app.use(express.json());
 app.use(cors({
   origin: 'https://skillgpt.azurewebsites.net' // or '*'
 }));
+app.get('/hello', (req: Request, res: Response) => {
+  res.send('Hello World!');
+})
 // for all generating content from GPT we use this path requests.
 app.use('/generate', contentGeneratorRouter);
 app.use('/userData', userDataRouter);
