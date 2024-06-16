@@ -5,7 +5,8 @@ import {
   ChapterConfig,
   chapterGenerator,
   ChapterConversationConfig,
-  chapterConversationHandler
+  chapterConversationHandler,
+  checkIfTopicIsEthical
 } from "../controllers/gptController";
 import { bookInsertion,chapterInsertion,ChapterConversation, chapterContentInsertion, chapterContentUpdate, getChapterConversationByChapterId  } from "../controllers/db";
 
@@ -106,6 +107,12 @@ router.post("/chapterConversation", async (req: Request, res: Response) => {
     }
     await chapterContentUpdate(updateConversationObject)
   res.json({msg: conversationResult});
+});
+
+router.post("/isEthicalTopic", async (req: Request, res: Response) => {
+  let topic = req.body.topic
+  let isEthical = await checkIfTopicIsEthical(topic);
+    res.json({msg: isEthical});
 });
 
 
