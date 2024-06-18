@@ -13,9 +13,7 @@ app.use(express.json());
 //   origin: 'https://skillgpt.netlify.app' // or '*'
 // }));
 
-app.use(cors({
-  origin: ['http://localhost:4200', 'https://skillgpt.netlify.app']
-}));
+app.use(cors());
 
 app.get('/hello', (req: Request, res: Response) => {
   res.send('Hello World!');
