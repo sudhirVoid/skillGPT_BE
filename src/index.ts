@@ -10,7 +10,7 @@ const port = PORT || 3000;
 
 app.use(express.json());
 app.use(cors({
-  origin: ['https://skillgpt.netlify.app','http://localhost:4200'] // or '*'
+  origin: ['https://skillgpt.netlify.app'] // or '*'
 }));
 app.get('/hello', (req: Request, res: Response) => {
   res.send('Hello World!');
