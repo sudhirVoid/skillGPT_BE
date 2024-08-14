@@ -73,6 +73,19 @@ async function getChapterConversationByChapterId(chapterId: number){
   return result;
 }
 
+// set payments details(Neon)
+async function setPayDetailsNeon(payDetails: any){
+  let query = `INSERT INTO PAYDETAILS (user_id, order_id, payment_id, paymentdate) VALUES ('${payDetails.user_id}','${payDetails.order_id}','${payDetails.payment_id}','${payDetails.paymentDate}');`
+  let result = await executeQuery(query)
+  return result
+}
+
+// set payments details Webhook(Neon)
+async function setPayDetailsWebhookNeon(payDetailsWebhook: any){
+  let query = `INSERT INTO PAYDETAILSWEBHOOK (order_id, payment_data) VALUES ('${payDetailsWebhook.payload.payment.entity.order_id}','${(JSON.stringify(payDetailsWebhook))}');`
+  let result = await executeQuery(query)
+}
+
 async function getBookByBookIdAndUserId(bookId: number, userId: string){
   let query = `SELECT
                   B.book_id AS bookId,
@@ -93,6 +106,4 @@ async function getBookByBookIdAndUserId(bookId: number, userId: string){
   let result = await executeQuery(query);
   return result;
 }
-
-
-export {getChapterConversationByChapterId,getBookByBookIdAndUserId, bookInsertion, chapterInsertion, ChapterConversation,chapterContentInsertion, getAllBooksOfUser,getBookChaptersByBookId, getChapterDataByChapterId,chapterContentUpdate};
+export {getChapterConversationByChapterId, bookInsertion, chapterInsertion, ChapterConversation,chapterContentInsertion, getAllBooksOfUser,getBookChaptersByBookId, getChapterDataByChapterId,chapterContentUpdate};

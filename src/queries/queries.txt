@@ -18,6 +18,12 @@ CREATE TABLE Content (
     
 );
 
+CREATE TABLE PayDetails (
+    user_id VARCHAR(255) NOT NULL,
+    order_id VARCHAR(255) NOT NULL PRIMARY KEY,
+    payment_id VARCHAR(255) NOT NULL,
+    paymentDate VARCHAR(255) NOT NULL
+);
 CREATE TABLE PayDetailsWebHook (
     order_id VARCHAR  PRIMARY KEY,
     payment_data JSONB NOT NULL,
