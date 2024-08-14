@@ -17,3 +17,9 @@ CREATE TABLE Content (
     content_text JSONB
     
 );
+
+CREATE TABLE PayDetailsWebHook (
+    order_id VARCHAR  PRIMARY KEY,
+    payment_data JSONB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

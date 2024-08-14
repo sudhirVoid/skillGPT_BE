@@ -7,8 +7,12 @@ import {
   ChapterConversationConfig,
   chapterConversationHandler,
 } from "../controllers/gptController";
-import { bookInsertion,chapterInsertion,ChapterConversation, chapterContentInsertion, chapterContentUpdate, getChapterConversationByChapterId  } from "../controllers/db";
-
+import { bookInsertion,chapterInsertion,ChapterConversation, chapterContentInsertion, chapterContentUpdate, getChapterConversationByChapterId, getBookByBookIdAndUserId  } from "../controllers/db";
+import puppeteer from 'puppeteer';
+import fs from 'fs'
+import path from 'path'
+import { load } from "cheerio";
+import { table } from "console";
 const router: Router = Router();
 
 router.post("/syllabus", async (req: Request, res: Response) => {
@@ -106,6 +110,92 @@ router.post("/chapterConversation", async (req: Request, res: Response) => {
     }
     await chapterContentUpdate(updateConversationObject)
   res.json({msg: conversationResult});
+});
+
+router.get('/generatePdf', async (req: Request, res: Response) => {
+  let {bookId, userId} = req.query;
+  let browser;
+  try {
+    let bookData = await getBookByBookIdAndUserId(Number(bookId), String(userId));
+    let bookName = bookData[0]['booktitle'];
+    const margins = { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' };
+    const pdfDirPath = path.join(__dirname, 'pdfFiles');
+    const pdfFilePath = path.join(pdfDirPath, bookName);
+
+    if (!fs.existsSync(pdfDirPath)) {
+      fs.mkdirSync(pdfDirPath, { recursive: true });
+    }
+    browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    let PDFContent = "";
+    let tableOfContent = '<h1>Table of Contents</h1>';
+    bookData.forEach(data => {
+      const chapterId = `chapter-${data.chapterid}`;
+      tableOfContent += `<li><p id="${chapterId}">${data.chaptertitle}</p></li>`;
+  
+  // Generate Content
+      if (data.contenttext !== null) {
+        data.contenttext.forEach((chapterData: { gpt: string; user: string; }) => {
+          if (chapterData.gpt) {
+            PDFContent += `<div style="
+              background-color: #CCFFCC; /* light background for GPT */
+              color: 003049; /* text color */
+              padding: 10px;
+              border-radius: 10px;
+              margin-bottom: 10px;
+            ">${chapterData.gpt}</div>`;
+          }
+          if (chapterData.user) {
+            PDFContent += `<div style="
+              background-color: #e0efff; /* light blue background for user */
+              color: green; /* text color */
+              padding: 10px;
+              border-radius: 10px;
+              margin-bottom: 10px;
+            ">${chapterData.user}</div>`;
+          }
+        });
+      }
+    });
+    PDFContent = `<ul>${tableOfContent}</ul>` + PDFContent;
+    
+    // Set the content of the page
+    await page.setContent(`<!DOCTYPE HTML>
+      <html>
+        <head>
+          <title>${bookName}</title>
+          <meta charset="utf-8" />
+        </head>
+        <body>
+          ${PDFContent}
+        </body>
+      </html>`,
+       {waitUntil: 'load'});
+      
+
+    // Generate the PDF
+    await page.pdf({ path: pdfFilePath, format: 'A4', margin: margins, printBackground: true});
+
+    // Send the PDF file as a response for download
+    res.download(pdfFilePath, bookName, (err) => {
+      if (err) {
+        console.error('Error downloading file:', err);
+        res.status(500).send('Error downloading file');
+      }
+
+      // Optionally, delete the file after sending it
+      fs.unlink(pdfFilePath, (unlinkErr) => {
+        if (unlinkErr) console.error('Error deleting file:', unlinkErr);
+      });
+    });
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    res.status(500).send('Error generating PDF');
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
 });
 
 

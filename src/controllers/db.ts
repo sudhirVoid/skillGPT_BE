@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import { PGUSER, PGHOST, PGDATABASE, PGPASSWORD, PGPORT, DATABASEURL } from '../constants/constants';
 import { executeQuery } from './queryExecutor';
 import { queryStringOptimizer } from '../utils/queryStringOptimizer';
+import { exec } from 'child_process';
 interface ChapterConversation{
   chapterId: number,
   content: {
@@ -72,5 +73,26 @@ async function getChapterConversationByChapterId(chapterId: number){
   return result;
 }
 
+async function getBookByBookIdAndUserId(bookId: number, userId: string){
+  let query = `SELECT
+                  B.book_id AS bookId,
+                  B.title AS bookTitle,
+                  B.booklanguage AS bookLanguage,
+                  B.user_id AS userId,
+                  C.chapter_id AS chapterId,
+                  C.chapter_title AS chapterTitle,
+                  Co.content_id AS contentId,
+                  Co.content_text AS contentText
+                 FROM Books B
+                  INNER JOIN Chapters C
+                  ON B.book_id = C.book_id
+                  LEFT JOIN Content Co
+                  ON C.chapter_id = Co.chapter_id
+                  WHERE B.user_id = '${userId}'
+                    AND B.book_id = ${bookId};`
+  let result = await executeQuery(query);
+  return result;
+}
 
-export {getChapterConversationByChapterId, bookInsertion, chapterInsertion, ChapterConversation,chapterContentInsertion, getAllBooksOfUser,getBookChaptersByBookId, getChapterDataByChapterId,chapterContentUpdate};
+
+export {getChapterConversationByChapterId,getBookByBookIdAndUserId, bookInsertion, chapterInsertion, ChapterConversation,chapterContentInsertion, getAllBooksOfUser,getBookChaptersByBookId, getChapterDataByChapterId,chapterContentUpdate};
