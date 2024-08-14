@@ -94,17 +94,6 @@ async function chapterConversationHandler(conversationObject: ChapterConversatio
     return conversationObj;
 }
 
-async function checkIfTopicIsEthical(topic: string) {
-    let promptForTopicIntent = `
-    You are an excellent intent classifier. Determine whether the given topic is malicious, harmful, or inappropriate. If it is, respond with 'no'; otherwise, respond with 'yes'.
-    Topic: ${topic}
-    Answer: 'yes' or 'no'
-    `
-    let messageObject = [{ role: "system", content: promptForTopicIntent }]
-    let isEthical = await gptCall(messageObject);
-    return isEthical.message.content?.toLowerCase().includes("yes") === true ? true : false
-}
-
 async function gptCall(messageObject: any) {
     console.log(messageObject)
     const completion = await openai.chat.completions.create({
@@ -115,4 +104,4 @@ async function gptCall(messageObject: any) {
       return completion.choices[0]
 }
 
-export {syllabusGenerator, chapterGenerator, SyllabusConfig, ChapterConfig, ChapterConversationConfig, chapterConversationHandler, checkIfTopicIsEthical}
+export {syllabusGenerator, chapterGenerator, SyllabusConfig, ChapterConfig, ChapterConversationConfig, chapterConversationHandler}

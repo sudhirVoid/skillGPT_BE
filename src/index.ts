@@ -27,7 +27,7 @@ const utility = {
 
 app.use(express.json());
 app.use(cors({
-  origin: 'http://localhost:4200' // or '*'
+  origin: ['https://skillgpt.netlify.app'] // or '*'
 }));
 // // app.use(cors());
 
