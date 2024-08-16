@@ -46,7 +46,6 @@ async function chapterContentUpdate(chapterDetails: ChapterConversation){
                 WHERE chapter_id = ${chapterDetails.chapterId}
                 RETURNING content_id, content_text;
               `
-  console.log(query);
   let result = await executeQuery(query)
   return result
 }
@@ -106,4 +105,4 @@ async function getBookByBookIdAndUserId(bookId: number, userId: string){
   let result = await executeQuery(query);
   return result;
 }
-export {getChapterConversationByChapterId, bookInsertion, chapterInsertion, ChapterConversation,chapterContentInsertion, getAllBooksOfUser,getBookChaptersByBookId, getChapterDataByChapterId,chapterContentUpdate};
+export { getChapterConversationByChapterId, bookInsertion, chapterInsertion, ChapterConversation, chapterContentInsertion, getAllBooksOfUser, getBookChaptersByBookId, getChapterDataByChapterId, chapterContentUpdate, getBookByBookIdAndUserId,setPayDetailsWebhookNeon,setPayDetailsNeon };

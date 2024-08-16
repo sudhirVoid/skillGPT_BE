@@ -29,7 +29,6 @@ router.post("/syllabus", async (req: Request, res: Response) => {
 
     */
     let bookResult = await bookInsertion(syllabus.bookTopic, syllabus.language, syllabus.userId);
-    console.log(bookResult)
     let bookId = bookResult?.book_id;
     //insert chapters and returns chapter with their id at insertion time.
     /*
@@ -102,7 +101,6 @@ router.post("/chapterConversation", async (req: Request, res: Response) => {
 
   */
     chapterConversation.content.push(conversationResult as any)
-    console.log(chapterConversation.content)
     //insert in database.
     let updateConversationObject: ChapterConversation = {
       chapterId: chapterConversation.chapterDetails.chapterId,

@@ -28,10 +28,10 @@ const utility = {
 };
 
 app.use(express.json());
-app.use(cors({
-  origin: ['https://skillgpt.netlify.app'] // or '*'
-}));
-// // app.use(cors());
+// app.use(cors({
+//   origin: ['https://skillgpt.netlify.app'] // or '*'
+// }));
+app.use(cors());
 
 
 var instance = new Razorpay({
@@ -58,7 +58,6 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 app.post("/api/createPaymentOrder", (req, res) => {
   // Handle POST request here
   var amount = utility.rupeesToPaise(req.body.payload.amount);
-  console.log("amount : ", req.body);
   var options = {
     amount: amount, // amount in the smallest currency unit here paise
     currency: "INR",

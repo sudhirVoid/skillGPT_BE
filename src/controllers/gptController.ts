@@ -35,7 +35,6 @@ async function syllabusGenerator(syllabusConfig: SyllabusConfig) {
 `
     let messageObject = [{ role: "system", content: syllabusSystemPrompt }]
     let syllabus = await gptCall(messageObject)
-    console.log(syllabus)
     let chapters = syllabus!.message!.content!.split('|').map(chapter => chapter.trimStart().trimEnd())
     return chapters;
 }
@@ -52,7 +51,6 @@ async function chapterGenerator(chapterConfig: ChapterConfig){
 
     let messageObject = [{ role: "system", content: chapterPrompt }]
     let syllabus = await gptCall(messageObject)
-    console.log(syllabus)
     //this is markdown string.
     const chapterContent = syllabus!.message!.content as string
     const htmlContent = marked.parse(chapterContent);
@@ -95,12 +93,10 @@ async function chapterConversationHandler(conversationObject: ChapterConversatio
 }
 
 async function gptCall(messageObject: any) {
-    console.log(messageObject)
     const completion = await openai.chat.completions.create({
         messages: messageObject,
         model: "gpt-3.5-turbo",
       });
-      console.log(completion.choices[0]);
       return completion.choices[0]
 }
 
