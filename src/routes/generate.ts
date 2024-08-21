@@ -11,8 +11,7 @@ import { bookInsertion,chapterInsertion,ChapterConversation, chapterContentInser
 import puppeteer from 'puppeteer';
 import fs from 'fs'
 import path from 'path'
-import { load } from "cheerio";
-import { table } from "console";
+const html_to_pdf = require('html-pdf-node');
 const router: Router = Router();
 
 router.post("/syllabus", async (req: Request, res: Response) => {
@@ -158,7 +157,7 @@ router.get('/generatePdf', async (req: Request, res: Response) => {
     PDFContent = `<ul>${tableOfContent}</ul>` + PDFContent;
     
     // Set the content of the page
-    await page.setContent(`<!DOCTYPE HTML>
+    let htmlContent = `<!DOCTYPE HTML>
       <html>
         <head>
           <title>${bookName}</title>
@@ -167,24 +166,28 @@ router.get('/generatePdf', async (req: Request, res: Response) => {
         <body>
           ${PDFContent}
         </body>
-      </html>`,
-       {waitUntil: 'load'});
+      </html>`;
       
-
     // Generate the PDF
-    await page.pdf({ path: pdfFilePath, format: 'A4', margin: margins, printBackground: true});
-
-    // Send the PDF file as a response for download
-    res.download(pdfFilePath, bookName, (err) => {
-      if (err) {
-        console.error('Error downloading file:', err);
-        res.status(500).send('Error downloading file');
+    let file =  { content: htmlContent } ;
+    let options = { 
+      format: 'A4' ,
+      "displayHeaderFooter": true,
+      margin: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm'
       }
-
-      // Optionally, delete the file after sending it
-      fs.unlink(pdfFilePath, (unlinkErr) => {
-        if (unlinkErr) console.error('Error deleting file:', unlinkErr);
-      });
+    };
+    // Send the PDF file as a response for download
+    html_to_pdf.generatePdf(file, options)
+    .then((pdfBuffer: any) => {
+      res.type('application/pdf');
+      res.send(pdfBuffer);
+    })
+    .catch((err: { message: string; }) => {
+      res.status(500).send('Error generating PDF: ' + err.message);
     });
   } catch (error) {
     console.error('Error generating PDF:', error);
