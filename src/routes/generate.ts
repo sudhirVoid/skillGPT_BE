@@ -111,19 +111,14 @@ router.post("/chapterConversation", async (req: Request, res: Response) => {
 
 router.get('/generatePdf', async (req: Request, res: Response) => {
   let {bookId, userId} = req.query;
-  let browser;
   try {
     let bookData = await getBookByBookIdAndUserId(Number(bookId), String(userId));
     let bookName = bookData[0]['booktitle'];
-    const margins = { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' };
     const pdfDirPath = path.join(__dirname, 'pdfFiles');
-    const pdfFilePath = path.join(pdfDirPath, bookName);
 
     if (!fs.existsSync(pdfDirPath)) {
       fs.mkdirSync(pdfDirPath, { recursive: true });
     }
-    browser = await puppeteer.launch();
-    const page = await browser.newPage();
     let PDFContent = "";
     let tableOfContent = '<h1>Table of Contents</h1>';
     bookData.forEach(data => {
@@ -193,9 +188,6 @@ router.get('/generatePdf', async (req: Request, res: Response) => {
     console.error('Error generating PDF:', error);
     res.status(500).send('Error generating PDF');
   } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
 });
 
