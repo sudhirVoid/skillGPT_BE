@@ -108,23 +108,34 @@ router.post("/chapterConversation", async (req: Request, res: Response) => {
     await chapterContentUpdate(updateConversationObject)
   res.json({msg: conversationResult});
 });
-
 router.get('/generatePdf', async (req: Request, res: Response) => {
   let {bookId, userId} = req.query;
+  let browser;
   try {
     let bookData = await getBookByBookIdAndUserId(Number(bookId), String(userId));
     let bookName = bookData[0]['booktitle'];
+    const margins = { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' };
     const pdfDirPath = path.join(__dirname, 'pdfFiles');
+    const pdfFilePath = path.join(pdfDirPath, bookName);
 
     if (!fs.existsSync(pdfDirPath)) {
       fs.mkdirSync(pdfDirPath, { recursive: true });
     }
+    browser = await puppeteer.launch({
+      args: [
+        "--disable-setuid-sandbox",
+        "--no-sandbox",
+        "--single-process",
+        "--no-zygote",
+      ]
+    });
+    const page = await browser.newPage();
     let PDFContent = "";
     let tableOfContent = '<h1>Table of Contents</h1>';
     bookData.forEach(data => {
       const chapterId = `chapter-${data.chapterid}`;
       tableOfContent += `<li><p id="${chapterId}">${data.chaptertitle}</p></li>`;
-  
+
   // Generate Content
       if (data.contenttext !== null) {
         data.contenttext.forEach((chapterData: { gpt: string; user: string; }) => {
@@ -150,9 +161,9 @@ router.get('/generatePdf', async (req: Request, res: Response) => {
       }
     });
     PDFContent = `<ul>${tableOfContent}</ul>` + PDFContent;
-    
+
     // Set the content of the page
-    let htmlContent = `<!DOCTYPE HTML>
+    await page.setContent(`<!DOCTYPE HTML>
       <html>
         <head>
           <title>${bookName}</title>
@@ -161,35 +172,115 @@ router.get('/generatePdf', async (req: Request, res: Response) => {
         <body>
           ${PDFContent}
         </body>
-      </html>`;
-      
+      </html>`,
+       {waitUntil: 'load'});
+
+
     // Generate the PDF
-    let file =  { content: htmlContent } ;
-    let options = { 
-      format: 'A4' ,
-      "displayHeaderFooter": true,
-      margin: {
-        top: '10mm',
-        right: '10mm',
-        bottom: '10mm',
-        left: '10mm'
-      }
-    };
+    await page.pdf({ path: pdfFilePath, format: 'A4', margin: margins, printBackground: true});
+
     // Send the PDF file as a response for download
-    html_to_pdf.generatePdf(file, options)
-    .then((pdfBuffer: any) => {
-      res.type('application/pdf');
-      res.send(pdfBuffer);
-    })
-    .catch((err: { message: string; }) => {
-      res.status(500).send('Error generating PDF: ' + err.message);
+    res.download(pdfFilePath, bookName, (err) => {
+      if (err) {
+        console.error('Error downloading file:', err);
+        res.status(500).send('Error downloading file');
+      }
+
+      // Optionally, delete the file after sending it
+      fs.unlink(pdfFilePath, (unlinkErr) => {
+        if (unlinkErr) console.error('Error deleting file:', unlinkErr);
+      });
     });
   } catch (error) {
     console.error('Error generating PDF:', error);
     res.status(500).send('Error generating PDF');
   } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 });
+// router.get('/generatePdf', async (req: Request, res: Response) => {
+//   let {bookId, userId} = req.query;
+//   try {
+//     let bookData = await getBookByBookIdAndUserId(Number(bookId), String(userId));
+//     let bookName = bookData[0]['booktitle'];
+//     const pdfDirPath = path.join(__dirname, 'pdfFiles');
+
+//     if (!fs.existsSync(pdfDirPath)) {
+//       fs.mkdirSync(pdfDirPath, { recursive: true });
+//     }
+//     let PDFContent = "";
+//     let tableOfContent = '<h1>Table of Contents</h1>';
+//     bookData.forEach(data => {
+//       const chapterId = `chapter-${data.chapterid}`;
+//       tableOfContent += `<li><p id="${chapterId}">${data.chaptertitle}</p></li>`;
+  
+//   // Generate Content
+//       if (data.contenttext !== null) {
+//         data.contenttext.forEach((chapterData: { gpt: string; user: string; }) => {
+//           if (chapterData.gpt) {
+//             PDFContent += `<div style="
+//               background-color: #CCFFCC; /* light background for GPT */
+//               color: 003049; /* text color */
+//               padding: 10px;
+//               border-radius: 10px;
+//               margin-bottom: 10px;
+//             ">${chapterData.gpt}</div>`;
+//           }
+//           if (chapterData.user) {
+//             PDFContent += `<div style="
+//               background-color: #e0efff; /* light blue background for user */
+//               color: green; /* text color */
+//               padding: 10px;
+//               border-radius: 10px;
+//               margin-bottom: 10px;
+//             ">${chapterData.user}</div>`;
+//           }
+//         });
+//       }
+//     });
+//     PDFContent = `<ul>${tableOfContent}</ul>` + PDFContent;
+    
+//     // Set the content of the page
+//     let htmlContent = `<!DOCTYPE HTML>
+//       <html>
+//         <head>
+//           <title>${bookName}</title>
+//           <meta charset="utf-8" />
+//         </head>
+//         <body>
+//           ${PDFContent}
+//         </body>
+//       </html>`;
+      
+//     // Generate the PDF
+//     let file =  { content: htmlContent } ;
+//     let options = { 
+//       format: 'A4' ,
+//       "displayHeaderFooter": true,
+//       margin: {
+//         top: '10mm',
+//         right: '10mm',
+//         bottom: '10mm',
+//         left: '10mm'
+//       }
+//     };
+//     // Send the PDF file as a response for download
+//     html_to_pdf.generatePdf(file, options)
+//     .then((pdfBuffer: any) => {
+//       res.type('application/pdf');
+//       res.send(pdfBuffer);
+//     })
+//     .catch((err: { message: string; }) => {
+//       res.status(500).send('Error generating PDF: ' + err.message);
+//     });
+//   } catch (error) {
+//     console.error('Error generating PDF:', error);
+//     res.status(500).send('Error generating PDF');
+//   } finally {
+//   }
+// });
 
 
 export default router;
