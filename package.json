@@ -31,7 +31,7 @@
     "marked": "^12.0.1",
     "openai": "^4.30.0",
     "pg": "^8.11.4",
-    "puppeteer": "^23.1.0",
+    "puppeteer": "^23.1.1",
     "puppeteer-html-pdf": "^4.0.8",
     "razorpay": "^2.9.4"
   }

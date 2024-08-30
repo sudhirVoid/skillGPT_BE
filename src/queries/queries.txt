@@ -29,3 +29,5 @@ CREATE TABLE PayDetailsWebHook (
     payment_data JSONB NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE books
+ADD COLUMN is_completed BOOLEAN DEFAULT FALSE;
