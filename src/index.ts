@@ -13,6 +13,7 @@ import { RAZORPAYKEYID,RAZORPAYKEYSECRET } from './constants/constants';
 import puppeteer from 'puppeteer';
 import fs from 'fs'
 import path from 'path'
+import { updateUserDataRouter } from './routes/updateUserData';
 const app = express();
 const port = PORT || 3000;
 const razorPayKeyID = process.env.RazorPay_key_id!;
@@ -46,6 +47,7 @@ app.get('/hello', (req: Request, res: Response) => {
 // for all generating content from GPT we use this path requests.
 app.use('/generate', contentGeneratorRouter);
 app.use('/userData', userDataRouter);
+app.use('/update', updateUserDataRouter)
 //payroute
 app.use('/paymentData', paymentDataRouter);
 // Add this error handling middleware

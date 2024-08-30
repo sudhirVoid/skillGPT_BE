@@ -45,6 +45,7 @@ router.post("/getAllBooks", async(req: Request, res: Response) => {
                   B.user_id AS userId,
                   C.chapter_id AS chapterId,
                   C.chapter_title AS chapterTitle,
+                  C.is_completed AS isChapterCompleted,
                   Co.content_id AS contentId,
                   Co.content_text AS contentText
                  FROM Books B
