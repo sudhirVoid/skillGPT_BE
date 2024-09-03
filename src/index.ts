@@ -8,6 +8,7 @@ import { RAZORPAYKEYID,RAZORPAYKEYSECRET } from './constants/constants';
 import { updateUserDataRouter } from './routes/updateUserData';
 import { userAuthenticator } from './middlewares/authenticator';
 import { initializeFirebaseAdmin } from './utils/initFirebaseAdmin';
+import cors from 'cors'
 const app = express();
 initializeFirebaseAdmin();
 const port = PORT || 3000;
@@ -25,14 +26,14 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const corsWhitelist = [
     'https://skillgpt.netlify.app',
     'https://skillgpt.online',
-    // 'http://localhost:4200'
+    'http://localhost:4200'
   ];
  
   const origin = req.headers.origin as string | undefined;
  
   if (origin && corsWhitelist.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, X-User-Id');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
  
     // Handle preflight requests
@@ -54,7 +55,6 @@ var instance = new Razorpay({
 
 
 app.get('/hello', (req: Request, res: Response) => {
-  console.log('request received.')
   res.send('Hello from other world.')
 })
 // for all generating content from GPT we use this path requests.
