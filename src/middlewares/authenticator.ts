@@ -7,7 +7,8 @@ const authenticator = async (req:Request, res:Response, next: NextFunction) =>{
       if(routesToSkip.includes(req.path)){
         next();
       }
-      let userId = req.headers['x-user-id'] as string;
+      else{
+        let userId = req.headers['x-user-id'] as string;
         admin.auth().getUser(userId).then(data=>{
           next();
         }).catch(error=>{
@@ -17,8 +18,10 @@ const authenticator = async (req:Request, res:Response, next: NextFunction) =>{
                 statusCode:401
             })
         })
-      } catch (error) {
-        res.send('I failed.');
       }
+      }
+      catch (error) {
+        res.send('I failed.');  
+}
 }
 export {authenticator as userAuthenticator}
