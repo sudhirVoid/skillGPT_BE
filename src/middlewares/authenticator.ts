@@ -1,8 +1,13 @@
 import {Request, Response, NextFunction} from 'express';
 import admin from 'firebase-admin';
+const routesToSkip = ['/paymentData/setPayDetailsWebhookNeon', '/hello']
 const authenticator = async (req:Request, res:Response, next: NextFunction) =>{
-    let userId = req.headers['x-user-id'] as string;
+    
     try {
+      if(routesToSkip.includes(req.path)){
+        next();
+      }
+      let userId = req.headers['x-user-id'] as string;
         admin.auth().getUser(userId).then(data=>{
           next();
         }).catch(error=>{

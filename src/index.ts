@@ -2,14 +2,11 @@ import express, { Request, Response, NextFunction } from 'express';
 import contentGeneratorRouter  from './routes/generate';
 import userDataRouter from './routes/fetchUserData'
 import paymentDataRouter from './routes/paymentData'
-import cors from "cors";
 import { PORT } from './constants/constants';
 import Razorpay from 'razorpay';
 import { RAZORPAYKEYID,RAZORPAYKEYSECRET } from './constants/constants';
 import { updateUserDataRouter } from './routes/updateUserData';
 import { userAuthenticator } from './middlewares/authenticator';
-import admin from 'firebase-admin';
-import fs from 'fs'
 import { initializeFirebaseAdmin } from './utils/initFirebaseAdmin';
 const app = express();
 initializeFirebaseAdmin();
@@ -28,7 +25,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const corsWhitelist = [
     'https://skillgpt.netlify.app',
     'https://skillgpt.online',
-    'http://localhost:4200'
+    // 'http://localhost:4200'
   ];
  
   const origin = req.headers.origin as string | undefined;
@@ -58,28 +55,18 @@ var instance = new Razorpay({
 
 app.get('/hello', (req: Request, res: Response) => {
   console.log('request received.')
-  // try {
-  //   console.log('request received.')
-  //   admin.auth().getUser('ET9SeiUkDIfxHLUPly4I9YBAvbz2').then(data=>{
-  //     res.send(data);
-  //   })
-  // } catch (error) {
-  //   res.send('I failed.');
-  // }
   res.send('Hello from other world.')
 })
 // for all generating content from GPT we use this path requests.
 app.use('/generate', contentGeneratorRouter);
 app.use('/userData', userDataRouter);
 app.use('/update', updateUserDataRouter);
+
 //payroute
 app.use('/paymentData', paymentDataRouter);
 // Add this error handling middleware
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).send('Something went wrong');
-});
+
 
 app.post("/api/createPaymentOrder", (req, res) => {
   // Handle POST request here
@@ -124,6 +111,12 @@ app.post("/api/validatePayment", (req, res) => {
   res.send({ data: { isPaymentVerified: isPaymentVerified, 
     order_id: order_id, payment_id: razorpay_payment_id
    } });
+});
+
+// error handling for the whole application.
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack);
+  res.status(500).send('Something went wrong');
 });
 
 app.listen(port, () => {
