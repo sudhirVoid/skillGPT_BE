@@ -95,7 +95,7 @@ async function chapterConversationHandler(conversationObject: ChapterConversatio
 async function gptCall(messageObject: any) {
     const completion = await openai.chat.completions.create({
         messages: messageObject,
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o-mini",
       });
       return completion.choices[0]
 }

@@ -200,6 +200,7 @@ router.get('/generatePdf', async (req: Request, res: Response) => {
     }
   }
 });
+//OPTIONAL WAY. IF ABOVE STOP WORKING THEN IT IS THE QUICK PLAN.
 // router.get('/generatePdf', async (req: Request, res: Response) => {
 //   let {bookId, userId} = req.query;
 //   try {
