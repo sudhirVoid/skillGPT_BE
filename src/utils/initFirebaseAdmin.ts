@@ -12,7 +12,6 @@ const initializeFirebaseAdmin = () => {
         credential: admin.credential.cert(serviceAccount),
       });
   
-      console.log('Firebase Admin SDK initialized successfully.');
     } catch (error:any) {
       console.error('Error initializing Firebase Admin SDK:', error.message);
       process.exit(1);

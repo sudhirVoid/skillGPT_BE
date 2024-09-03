@@ -7,7 +7,6 @@ router.post("/isChapterCompleted", async(req: Request, res: Response) => {
     let chapterId = req.body.chapterid;
     let isCompleted = req.body.isChapterCompleted;
     let response = await updateChapterCompletionStatus(chapterId, isCompleted)
-    console.log(response)
     res.json(
         {
             data:response,
