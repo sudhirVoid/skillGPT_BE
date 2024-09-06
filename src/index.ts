@@ -28,11 +28,38 @@ const utility = {
   },
 };
 
+// app.use((req, res, next) => {
+//   console.log('Request Headers:', req.headers);
+//   next();
+// });
 app.use(express.json());
 // app.use(cors({
-//   origin: ['https://skillgpt.netlify.app'] // or '*'
+//   origin: ['http://localhost:3000'] // or '*'
 // }));
-app.use(cors());
+// app.use(cors());
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const corsWhitelist = [
+    'https://skillgpt.netlify.app',
+    'https://skillgpt.online',
+    'http://localhost:4200'
+  ];
+
+  const origin = req.headers.origin as string | undefined;
+
+  if (origin && corsWhitelist.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+  }
+
+  next();
+});
+
 
 
 var instance = new Razorpay({
