@@ -2,23 +2,16 @@ import express, { Request, Response, NextFunction } from 'express';
 import contentGeneratorRouter  from './routes/generate';
 import userDataRouter from './routes/fetchUserData'
 import paymentDataRouter from './routes/paymentData'
-import cors from "cors";
 import { PORT } from './constants/constants';
-import { bookInsertion} from './controllers/db';
-import { RazorpayHeaders } from 'razorpay/dist/types/api';
 import Razorpay from 'razorpay';
 import { RAZORPAYKEYID,RAZORPAYKEYSECRET } from './constants/constants';
-
-
-import puppeteer from 'puppeteer';
-import fs from 'fs'
-import path from 'path'
 import { updateUserDataRouter } from './routes/updateUserData';
+import { userAuthenticator } from './middlewares/authenticator';
+import { initializeFirebaseAdmin } from './utils/initFirebaseAdmin';
+import cors from 'cors'
 const app = express();
+initializeFirebaseAdmin();
 const port = PORT || 3000;
-const razorPayKeyID = process.env.RazorPay_key_id!;
-const razorPayKeySecret = process.env.RazorPay_key_secret!;
-
 const utility = {
   rupeesToPaise: function (rupees: number) {
     return rupees * 100;
@@ -33,34 +26,31 @@ const utility = {
 //   next();
 // });
 app.use(express.json());
-// app.use(cors({
-//   origin: ['http://localhost:3000'] // or '*'
-// }));
-// app.use(cors());
 app.use((req: Request, res: Response, next: NextFunction) => {
   const corsWhitelist = [
     'https://skillgpt.netlify.app',
     'https://skillgpt.online',
     'http://localhost:4200'
   ];
-
+ 
   const origin = req.headers.origin as string | undefined;
-
+ 
   if (origin && corsWhitelist.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, X-User-Id');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-
+ 
     // Handle preflight requests
     if (req.method === 'OPTIONS') {
       return res.sendStatus(200);
     }
   }
-
+ 
   next();
 });
-
-
+ 
+// app.use(cors());
+app.use(userAuthenticator)
 
 var instance = new Razorpay({
   key_id: RAZORPAYKEYID as string,
@@ -69,20 +59,18 @@ var instance = new Razorpay({
 
 
 app.get('/hello', (req: Request, res: Response) => {
-  res.send('Hello World!');
+  res.send('Hello from other world.')
 })
 // for all generating content from GPT we use this path requests.
 app.use('/generate', contentGeneratorRouter);
 app.use('/userData', userDataRouter);
-app.use('/update', updateUserDataRouter)
+app.use('/update', updateUserDataRouter);
+
 //payroute
 app.use('/paymentData', paymentDataRouter);
 // Add this error handling middleware
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).send('Something went wrong');
-});
+
 
 app.post("/api/createPaymentOrder", (req, res) => {
   // Handle POST request here
@@ -127,6 +115,12 @@ app.post("/api/validatePayment", (req, res) => {
   res.send({ data: { isPaymentVerified: isPaymentVerified, 
     order_id: order_id, payment_id: razorpay_payment_id
    } });
+});
+
+// error handling for the whole application.
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack);
+  res.status(500).send('Something went wrong');
 });
 
 app.listen(port, () => {

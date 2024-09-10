@@ -149,7 +149,6 @@ async function updateChapterCompletionStatus(
                 WHERE chapter_id = ${chapterId}
                 RETURNING is_completed, chapter_id;
               `;
-  console.log(query);
   let result = await executeQuery(query);
   return result;
 }
