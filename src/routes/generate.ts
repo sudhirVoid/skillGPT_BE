@@ -6,11 +6,15 @@ import {
   chapterGenerator,
   ChapterConversationConfig,
   chapterConversationHandler,
+  generateFlashCards,
 } from "../controllers/gptController";
-import { bookInsertion,chapterInsertion,ChapterConversation, chapterContentInsertion, chapterContentUpdate, getChapterConversationByChapterId, getBookByBookIdAndUserId  } from "../controllers/db";
+import { bookInsertion,chapterInsertion,ChapterConversation, chapterContentInsertion, chapterContentUpdate, getChapterConversationByChapterId, getBookByBookIdAndUserId, getBookChaptersByBookId  } from "../controllers/db";
 import puppeteer from 'puppeteer';
 import fs from 'fs'
 import path from 'path'
+import { getBookContentInSingleStringQuery, getOldBookDataQuery } from "../utils/getQueries";
+import {convert} from 'html-to-text';
+import { splitByPeriodAndCombineIndexes } from "../utils/dataManipulationAndOperations";
 const html_to_pdf = require('html-pdf-node');
 const router: Router = Router();
 
@@ -283,5 +287,18 @@ router.get('/generatePdf', async (req: Request, res: Response) => {
 //   }
 // });
 
+router.post('/flashCards', async (req, res)=>{
+  let bookObject = req.body;
+  let query = getBookContentInSingleStringQuery(bookObject.userId , bookObject.bookId);
+  let bookData = await getBookChaptersByBookId(query) as unknown as { bookId: number, userId: string, bookContent: string }[];
+  let plainContent = splitByPeriodAndCombineIndexes(convert(bookData[0].bookContent));
+  //call gpt with prompt. 
+  let flashResult = await generateFlashCards(plainContent)
+  res.json({
+      bookId: bookData[0].bookId,
+      userId: bookData[0].userId,
+      flashCards: flashResult
+    })
+});
 
 export default router;

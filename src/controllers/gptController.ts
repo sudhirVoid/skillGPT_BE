@@ -1,7 +1,7 @@
 import { GPT_API_KEY } from "../constants/constants";
 import OpenAI from "openai";
 import { marked } from 'marked';
-
+import { Transform } from "stream";
 const openai = new OpenAI(
     {
         apiKey: GPT_API_KEY
@@ -57,7 +57,6 @@ async function chapterGenerator(chapterConfig: ChapterConfig){
     return htmlContent;
     
 }
-
 async function chapterConversationHandler(conversationObject: ChapterConversationConfig){
     // let conversationPrompt = makePromptForChapterAndConversation({bookTopic: conversationObject.chapterDetails.bookTopic, bookChapter: conversationObject.chapterDetails.bookChapter,bookLanguage: conversationObject.chapterDetails.bookLanguage});
 
@@ -91,13 +90,48 @@ async function chapterConversationHandler(conversationObject: ChapterConversatio
     }
     return conversationObj;
 }
+const generateFlashCards = async (topic: string, count: number = 10) => {
+    try {
+        const flashCardPrompt = `Generate ${count} questions and an answer for each, return as a list of json with the fields "question" and "answer". The questions are about ${topic}.`;
+        const messageObject = [{ role: "system", content: flashCardPrompt }];
+        const result = await gptCall(messageObject, true);
+        const content = result.message.content;
+        
+        if (content) {
+            const flashCards = JSON.parse(content);
+            return flashCards.questions.map((card: { question: string; answer: string }) => ({
+                question: card.question,
+                answer: card.answer,
+            }));
+        }
 
-async function gptCall(messageObject: any) {
-    const completion = await openai.chat.completions.create({
-        messages: messageObject,
-        model: "gpt-4o-mini",
-      });
-      return completion.choices[0]
+        return null;
+    } catch (error) {
+        console.error("Error generating flash cards:", error);
+        return null;
+    }
+};
+
+async function gptCall(messageObject: any, isStructuredCall = false) {
+    if (isStructuredCall) {
+        const completion = await openai.chat.completions.create({
+            messages: messageObject,
+            model: "gpt-4o-mini",
+            response_format: {"type": "json_object"},
+          }
+        );
+        return completion.choices[0]
+    }
+    else{
+        const completion = await openai.chat.completions.create({
+            messages: messageObject,
+            model: "gpt-4o-mini"
+          }
+        );
+        return completion.choices[0]
+    }
+
+      
 }
 
-export {syllabusGenerator, chapterGenerator, SyllabusConfig, ChapterConfig, ChapterConversationConfig, chapterConversationHandler}
+export {syllabusGenerator, chapterGenerator, SyllabusConfig, ChapterConfig, generateFlashCards,ChapterConversationConfig, chapterConversationHandler}
