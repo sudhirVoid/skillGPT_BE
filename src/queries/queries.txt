@@ -40,3 +40,28 @@ ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
 ALTER TABLE content
 ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+--Create FlashCard Table:
+CREATE TABLE FlashCard (
+    FlipCardID SERIAL PRIMARY KEY,
+    BookID INT REFERENCES Books(book_id) ON DELETE CASCADE,
+    Content JSONB,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Questions
+CREATE TABLE Questions (
+    BookID INT REFERENCES Books(book_id) ON DELETE CASCADE, -- Foreign key referencing the books table
+    Question JSONB NOT NULL,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Quiz Table where quiz attempted by user is stored.
+CREATE TABLE Quiz (
+    quizId UUID PRIMARY KEY,
+    userId TEXT NOT NULL,
+    quiz JSONB NOT NULL,
+    score INT,
+    total_questions INT,
+    bookId INT REFERENCES Books(book_id) ON DELETE CASCADE
+);

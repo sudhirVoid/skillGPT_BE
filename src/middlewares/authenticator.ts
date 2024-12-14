@@ -1,6 +1,6 @@
 import {Request, Response, NextFunction} from 'express';
 import admin from 'firebase-admin';
-const routesToSkip = ['/paymentData/setPayDetailsWebhookNeon', '/hello']
+const routesToSkip = ['/paymentData/setPayDetailsWebhookNeon', '/hello','/generate/quiz']
 const authenticator = async (req:Request, res:Response, next: NextFunction) =>{
     
     try {
