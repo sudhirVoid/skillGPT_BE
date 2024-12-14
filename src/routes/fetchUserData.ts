@@ -9,6 +9,7 @@ import {
 } from "../controllers/gptController";
 import {  getAllBooksOfUser, getBookChaptersByBookId, getChapterConversationByChapterId  } from "../controllers/db";
 import { getOldBookDataQuery } from "../utils/getQueries";
+import { Question, QuizPaper } from "../models/interfaces";
 
 const router: Router = Router();
 
