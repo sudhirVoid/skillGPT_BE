@@ -2,3 +2,7 @@
 .env
 .vscode
 skillGptServiceAccountKey.json
+/deploybe/functions/node_modules
+/deploybe/functions/.env
+/deploybe/functions/skillGptServiceAccountKey.json
+/deploybe/functions/lib
