@@ -1,13 +1,19 @@
-name: Build and Push Docker image to Docker Hub
+name: Build, Push Docker image to Docker Hub, and Trigger Auto Deployment for SkillGPT
 
 on:
   push:
     branches:
       - master
+    paths:
+      - '**'
+      - '.github/workflows/skillgpt-AutoDeployTrigger-bd4f9eb5-8738-43d7-851a-2788640f1158.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
 
 jobs:
-  push_to_registry:
-    name: Push Docker image to Docker Hub
+  build_and_push:
+    name: Build and Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -25,3 +31,34 @@ jobs:
           context: ./
           push: true
           tags: nullvsvoid/skillgpt_new:latest
+
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.SKILLGPT_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.SKILLGPT_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.SKILLGPT_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}
+          _dockerfilePathKey_: _dockerfilePath_
+          registryUrl: hub.docker.com
+          registryUsername: ${{ secrets.SKILLGPT_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.SKILLGPT_REGISTRY_PASSWORD }}
+          containerAppName: skillgpt
+          resourceGroup: DefaultResourceGroup-EUS
+          imageToBuild: hub.docker.com/skillgpt:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
