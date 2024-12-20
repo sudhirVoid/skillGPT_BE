@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { v4 as uuidv4 } from 'uuid';
 import {
   syllabusGenerator,
   SyllabusConfig,
@@ -6,11 +7,17 @@ import {
   chapterGenerator,
   ChapterConversationConfig,
   chapterConversationHandler,
+  generateFlashCards,
+  generateQuiz,
 } from "../controllers/gptController";
-import { bookInsertion,chapterInsertion,ChapterConversation, chapterContentInsertion, chapterContentUpdate, getChapterConversationByChapterId, getBookByBookIdAndUserId  } from "../controllers/db";
+import { bookInsertion,chapterInsertion,ChapterConversation, chapterContentInsertion, chapterContentUpdate, getChapterConversationByChapterId, getBookByBookIdAndUserId, getBookChaptersByBookId, saveFlashCardGenerated, getFlashObject, getExistingQuestions, saveNewQuestions, saveQuiz  } from "../controllers/db";
 import puppeteer from 'puppeteer';
 import fs from 'fs'
 import path from 'path'
+import { getBookContentInSingleStringQuery, getOldBookDataQuery } from "../utils/getQueries";
+import {convert} from 'html-to-text';
+import { splitByPeriodAndCombineIndexes } from "../utils/dataManipulationAndOperations";
+import { Question, QuizPaper } from "../models/interfaces";
 const html_to_pdf = require('html-pdf-node');
 const router: Router = Router();
 
@@ -283,5 +290,58 @@ router.get('/generatePdf', async (req: Request, res: Response) => {
 //   }
 // });
 
+router.post('/flashCards', async (req, res)=>{
+  let bookObject = req.body;
+  let flashObject = await getFlashObject(bookObject.bookId);
+  if(flashObject && flashObject.length > 0){
+    return res.json({
+      bookId: bookObject.bookId,
+      userId: bookObject.userId,
+      flashCards: flashObject[0].content
+    })
+  }
+  let query = getBookContentInSingleStringQuery(bookObject.userId , bookObject.bookId);
+  let bookData = await getBookChaptersByBookId(query) as unknown as { bookId: number, userId: string, bookContent: string }[];
+  let plainContent = splitByPeriodAndCombineIndexes(convert(bookData[0].bookContent));
+  let flashResult = await generateFlashCards(plainContent);
+  let saveFlashResponse = await saveFlashCardGenerated(bookObject.bookId, flashResult);
+
+  res.json({
+      bookId: bookData[0].bookId,
+      userId: bookData[0].userId,
+      flashCards: flashResult
+    })
+});
+
+router.post('/quiz', async (req, res)=>{
+  let bookObject = req.body;
+  let questions:Question[] = await getExistingQuestions(bookObject.bookId);
+  let quizPaper:QuizPaper;
+
+  if(questions.length == 0){
+    let query = getBookContentInSingleStringQuery(bookObject.userId , bookObject.bookId);
+    let bookData = await getBookChaptersByBookId(query) as unknown as { bookId: number, userId: string, bookContent: string }[];
+    let plainContent = splitByPeriodAndCombineIndexes(convert(bookData[0].bookContent));
+    questions = await generateQuiz(plainContent);
+  
+    questions.forEach((question, index) => {
+      question.questionId = uuidv4();
+      question.userAnswer = -1;
+      question.options.forEach((option, optionIndex) => {
+        option.index = optionIndex;
+      })
+    })
+    await saveNewQuestions(bookObject.bookId, questions);
+  }
+
+  quizPaper = {
+    quizId: uuidv4(),
+    quizScore: 0,
+    questions: questions
+  }
+  //save this quiz in the database
+  await saveQuiz(bookObject.bookId, bookObject.userId, questions, quizPaper.quizId,undefined,questions.length);
+  res.json(quizPaper);
+});
 
 export default router;

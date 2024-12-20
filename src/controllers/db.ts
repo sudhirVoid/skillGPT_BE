@@ -11,6 +11,7 @@ import {
 import { executeQuery } from "./queryExecutor";
 import { queryStringOptimizer } from "../utils/queryStringOptimizer";
 import { exec } from "child_process";
+import { Question, QuizPaper } from "../models/interfaces";
 interface ChapterConversation {
   chapterId: number;
   content: {
@@ -152,6 +153,90 @@ async function updateChapterCompletionStatus(
   let result = await executeQuery(query);
   return result;
 }
+
+async function saveFlashCardGenerated(bookId: number, flashCardContent: JSON) {
+  // Escape the JSON content to make it safe for SQL
+  const escapedContent = JSON.stringify(flashCardContent).replace(/'/g, "''");
+  // Construct the query string
+  const query = `INSERT INTO FLASHCARD (bookid, content)
+                 VALUES (${bookId}, '${escapedContent}');`;
+  // Execute the query
+  const result = await executeQuery(query);
+  return result;
+}
+
+async function saveNewQuestions(bookId: number, questions: Question[]) {
+    try {
+      let values = '';
+      for (let i = 0; i < questions.length; i++) {
+        const escapedContent = JSON.stringify(questions[i]).replace(/'/g, "''");
+        values += `(${bookId}, '${escapedContent}')`;
+        if (i < questions.length - 1) {
+          values += ', ';
+  }
+}
+
+const query = `INSERT INTO Questions (BookID, Question) VALUES ${values}`;
+executeQuery(query);
+    }
+    catch(error){
+      console.error(error);
+      return null;
+    }
+
+}
+
+async function saveQuiz(bookId: number, userId: number, questions: Question[], quizId:string,score?:number,totalQuestions?:number) {
+  try {
+    const escapedQuizContent = JSON.stringify(questions).replace(/'/g, "''");
+
+    const query = `
+      INSERT INTO Quiz (quizId, userId, quiz, score, total_questions, bookId)
+      VALUES ('${quizId}', '${userId}', '${escapedQuizContent}', ${score || null}, ${totalQuestions || null}, ${bookId});
+    `;
+    executeQuery(query);
+}
+catch(error){
+
+}
+
+}
+async function getFlashObject(bookId: number){
+  let query = `SELECT * FROM FLASHCARD WHERE bookid = ${bookId}`;
+  let result = await executeQuery(query);
+  return result;
+}
+
+async function getExistingQuestions(bookId: number){
+  let query = `
+    SELECT *
+    FROM Questions
+    WHERE bookId = ${bookId}
+    ORDER BY RANDOM()
+    LIMIT 10`;
+
+  let result = await executeQuery(query);
+  result = result.map(row => row.question)
+  return result;
+}
+
+async function updateQuizResult(bookId:number, userId:string, quizId:string, quizPaper:QuizPaper) {
+  try {
+    const escapedQuizContent = JSON.stringify(quizPaper.questions).replace(/'/g, "''");
+
+    const query = `
+      UPDATE Quiz SET quiz = '${escapedQuizContent}', score = ${quizPaper.quizScore}, total_questions = ${quizPaper.questions.length} WHERE quizId = '${quizId}';
+      
+    `;
+    
+    return await executeQuery(query);
+}
+catch(error){
+  console.error(error);
+  return null;
+}
+}
+
 export {
   updateChapterCompletionStatus,
   getChapterConversationByChapterId,
@@ -166,4 +251,10 @@ export {
   getBookByBookIdAndUserId,
   setPayDetailsWebhookNeon,
   setPayDetailsNeon,
+  saveFlashCardGenerated,
+  getFlashObject,
+  getExistingQuestions,
+  saveNewQuestions,
+  saveQuiz,
+  updateQuizResult
 };
