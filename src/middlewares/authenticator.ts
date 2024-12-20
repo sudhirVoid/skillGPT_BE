@@ -12,6 +12,7 @@ const authenticator = async (req:Request, res:Response, next: NextFunction) =>{
         admin.auth().getUser(userId).then(data=>{
           next();
         }).catch(error=>{
+          console.log(error);
             res.status(401).json({
                 error: 'Unauthorized',
                 msg: 'Request from Unauthorized User.',
