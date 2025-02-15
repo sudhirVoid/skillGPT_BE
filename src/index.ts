@@ -9,6 +9,7 @@ import { updateUserDataRouter } from './routes/updateUserData';
 import { userAuthenticator } from './middlewares/authenticator';
 import { initializeFirebaseAdmin } from './utils/initFirebaseAdmin';
 import cors from 'cors'
+import releventItemsToTopicRouter from './routes/releventItemsToTopicRouter';
 const app = express();
 initializeFirebaseAdmin();
 const port = PORT || 3000;
@@ -65,7 +66,7 @@ app.get('/hello', (req: Request, res: Response) => {
 app.use('/generate', contentGeneratorRouter);
 app.use('/userData', userDataRouter);
 app.use('/update', updateUserDataRouter);
-
+app.use('/relevent',releventItemsToTopicRouter)
 //payroute
 app.use('/paymentData', paymentDataRouter);
 // Add this error handling middleware
